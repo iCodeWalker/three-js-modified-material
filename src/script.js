@@ -71,6 +71,12 @@ const material = new THREE.MeshStandardMaterial({
   normalMap: normalTexture,
 });
 
+// Depth Material
+
+const depthMaterial = new THREE.MeshDepthMaterial({
+  depthPacking: THREE.RGBADepthPacking,
+});
+
 // custom  uniforms for accessing uniform outside the onBeforeCompile function
 let customUniforms = {
   uTime: { value: 0 },
@@ -84,6 +90,58 @@ material.onBeforeCompile = function (shader) {
   // console.log(shader);
   // Add uTime uniforms to the shader
 
+  shader.uniforms.uTime = customUniforms.uTime;
+
+  shader.vertexShader = shader.vertexShader.replace(
+    "#include <common>",
+    `
+        #include <common>
+        // Retrieve uTime uniform in the common chunk
+        uniform float uTime;
+
+        mat2 get2dRotateMatrix(float _angle)
+        {
+            return mat2(cos(_angle), -sin(_angle), sin(_angle), cos(_angle));
+        }
+
+    `
+  );
+
+  // For fixing core shadow
+  shader.vertexShader = shader.vertexShader.replace(
+    "#include <beginnormal_vertex>",
+    `
+        #include <beginnormal_vertex>
+        // Twisting the core shadow
+  
+        float angle = (position.y + uTime)*0.3;
+        mat2 rotateMatrix = get2dRotateMatrix(angle);
+        objectNormal.xz = rotateMatrix*objectNormal.xz;
+        
+      `
+  );
+
+  shader.vertexShader = shader.vertexShader.replace(
+    "#include <begin_vertex>",
+    `
+        #include <begin_vertex>
+        // Move the head by changing the y of transformed
+        // transformed.y += 3.0;
+        // Twisting the head
+
+        // float angle = (position.y + uTime)*0.9;
+        // mat2 rotateMatrix = get2dRotateMatrix(angle);
+        transformed.xz = rotateMatrix*transformed.xz;
+
+    `
+  );
+};
+
+/**
+ * onBeforeCompile function on depthMaterial, as we want the same twist on depthMaterial also
+ */
+
+depthMaterial.onBeforeCompile = (shader) => {
   shader.uniforms.uTime = customUniforms.uTime;
 
   shader.vertexShader = shader.vertexShader.replace(
@@ -123,11 +181,27 @@ gltfLoader.load("/models/LeePerrySmith/LeePerrySmith.glb", (gltf) => {
   const mesh = gltf.scene.children[0];
   mesh.rotation.y = Math.PI * 0.5;
   mesh.material = material;
+  // update the depth material
+  mesh.customDepthMaterial = depthMaterial;
   scene.add(mesh);
 
   // Update materials
   updateAllMaterials();
 });
+
+/**
+ * Plane for viewing depth material not twisting
+ */
+
+const plane = new THREE.Mesh(
+  new THREE.PlaneGeometry(15, 15, 15),
+  new THREE.MeshStandardMaterial()
+);
+
+plane.rotation.y = Math.PI;
+plane.position.y = -5;
+plane.position.z = 5;
+scene.add(plane);
 
 /**
  * Lights

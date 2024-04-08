@@ -63,4 +63,37 @@
       angle = (position.y + uTime)\*0.9;
 
    5. We cannot update the uTime in tick function because we cannot access the uTime outside the 'onBeforeCompile' function.
-      To access it outside we can create a 'customUniforms' object outside of 'onBeforeCompile', and update it inside the 'onBeforeCompile'
+      To access it outside we can create a 'customUniforms' object outside of 'onBeforeCompile', and update it inside the 'onBeforeCompile'.
+
+   6. Fixing the shadows :
+
+      To handle shadows, Three.js do renders from lights point of view called shadow maps. When these renders of lights occurs, all the materials are replaced by the another set of materials called depth material. These depth materials does not twist.
+
+      Create a plane behind the model to view this effect.
+
+      const plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(15, 15, 15),
+      new THREE.MeshStandardMaterial()
+      );
+
+      plane.rotation.y = Math.PI;
+      plane.position.y = -5;
+      plane.position.z = 5;
+      scene.add(plane);
+
+      We need to twist depth material too.
+
+      The material used for the shadows is a 'MeshDepthMaterial', we cannot access it easily, but we can override it with the property 'customDepthMaterial'.
+
+      Create a 'depthMaterial' with the 'MeshDepthMaterial' class. We can use THREE.RGBADepthPacking as 'depthPacking'
+
+      Use this 'depthMaterial' on the 'customDepthMaterial' property.
+
+      The drop shadow is fixed using this, but the core shadow (the shadow on the model) still has some issues.
+
+      It can be done using fixing the normal.
+      The normals are the data associated with the vertices that lets us know which direction is the outward direction.
+      This outward direction is used for lights, shadows, reflection, and stuff like that.
+      We rotated the vetices but we did not rotated the normals.
+
+      The chunk handling the normals is called 'beginnormal_vertex'.

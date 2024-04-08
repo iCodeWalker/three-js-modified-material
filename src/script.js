@@ -76,7 +76,31 @@ const material = new THREE.MeshStandardMaterial({
  */
 // The function is called by the three.js before the material is compiled.
 material.onBeforeCompile = function (shader) {
-  console.log(shader);
+  // console.log(shader);
+  shader.vertexShader = shader.vertexShader.replace(
+    "#include <common>",
+    `
+        #include <common>
+        mat2 get2dRotateMatrix(float _angle)
+        {
+            return mat2(cos(_angle), -sin(_angle), sin(_angle), cos(_angle));
+        }
+
+    `
+  );
+  shader.vertexShader = shader.vertexShader.replace(
+    "#include <begin_vertex>",
+    `
+        #include <begin_vertex>
+        // Move the head by changing the y of transformed
+        // transformed.y += 3.0;
+        // Twisting the head
+        float angle = 0.9;
+        mat2 rotateMatrix = get2dRotateMatrix(angle);
+        transformed.xz = rotateMatrix*transformed.xz;
+
+    `
+  );
 };
 
 /**

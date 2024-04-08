@@ -21,3 +21,34 @@
       material.onBeforeCompile = function(shader){
       console.log(shader);
       }
+
+5. Adding content to the vertex shader :
+   We will use #include ... to inject our code with a native Javascript replace(...)
+
+   'begin_vertex' is handling the position, by creating a variable named 'transformed'
+   we can replace #include <begin_vertex> inside the 'onBeforeCompile' function
+
+   // Move the head by changing the y of transformed
+   transformed.y += 3.0;
+
+   // Twisting
+   To twist the model, we need to do a rotation that vary depending on the elevation.
+
+   Create a 'angle' variable
+   float angle = 0.3;
+
+   We are going to use a matrix. The rotation will only occur on x and z which is why we need a 2D rotation matrix.
+   mat2 get2dRotateMatrix(float_angle)
+   {
+   return mat2(cos(\_angle), -sin(\_angle), sin(\_angle), cos(\_angle));
+   }
+
+   inclide inside common replace.
+
+   create the 'rotateMatrix' variable using the 'get2dRotateMatrix' function
+   mat2 rotateMatrix = get2dRotateMatrix(angle);
+
+   apply this matrix to the x and z properties together.
+   transformed.xz = rotateMatrix\*transformed.xz;
+
+6. Make angle vary according to elevation (height) :

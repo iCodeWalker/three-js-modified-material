@@ -52,3 +52,15 @@
    transformed.xz = rotateMatrix\*transformed.xz;
 
 6. Make angle vary according to elevation (height) :
+   float angle = position.y\*0.9;
+
+7. Animating the rotation :
+
+   1. In the onBeforeCompile, we have access to 'uniforms'.
+   2. Add a 'uTime' uniform.
+   3. Retrieve 'uTime' uniform in the common chunk.
+   4. Use it on the angle.
+      angle = (position.y + uTime)\*0.9;
+
+   5. We cannot update the uTime in tick function because we cannot access the uTime outside the 'onBeforeCompile' function.
+      To access it outside we can create a 'customUniforms' object outside of 'onBeforeCompile', and update it inside the 'onBeforeCompile'

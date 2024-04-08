@@ -72,6 +72,14 @@ const material = new THREE.MeshStandardMaterial({
 });
 
 /**
+ * Hooking the material
+ */
+// The function is called by the three.js before the material is compiled.
+material.onBeforeCompile = function (shader) {
+  console.log(shader);
+};
+
+/**
  * Models
  */
 gltfLoader.load("/models/LeePerrySmith/LeePerrySmith.glb", (gltf) => {
